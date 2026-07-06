@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario de Esquemas de Young (YSQ-III)</title>
+    
+    <!-- Librería para EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-hover: #0369a1;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text: #334155;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        h1 { text-align: center; color: var(--primary); margin-bottom: 25px; font-size: 24px; }
+        .instrucciones {
+            background: #f0f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 35px;
+            border-left: 4px solid var(--primary);
+            font-size: 14px;
+        }
+        .paciente-info {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 2fr;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+        @media (max-width: 768px) {
+            .paciente-info { grid-template-columns: 1fr; }
+        }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-weight: 600; margin-bottom: 5px; font-size: 13px; }
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .item-pregunta {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .pregunta-texto { font-weight: 500; margin-bottom: 12px; font-size: 15px; }
+        .opciones {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .opcion-label {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 11px;
+            text-align: center;
+            cursor: pointer;
+            padding: 10px 5px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: #f8fafc;
+            transition: all 0.2s;
+        }
+        .opcion-label:hover { background: #f1f5f9; }
+        .opcion-label input { margin-bottom: 6px; }
+        .btn-enviar {
+            display: block;
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 30px;
+        }
+        .btn-enviar:hover { background: var(--primary-hover); }
+        #mensaje-exito {
+            display: none;
+            text-align: center;
+            padding: 50px 20px;
+        }
+        #mensaje-exito h2 { color: #10b981; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="form-wrapper">
+        <h1>Cuestionario de Esquemas de Young (YSQ-III)</h1>
+        
+        <div class="instrucciones">
+            <strong>Instrucciones:</strong> A continuación se muestran una serie de frases que algunas personas pueden usar para describirse. Por favor, lea cada frase y decida qué tan bien lo describe cada una. Cuando usted no esté seguro, base su respuesta en lo que siente emocionalmente, no en lo que usted piensa que es correcto. Elija una calificación del 1 al 6 según corresponda:<br><br>
+            <strong>1</strong> = Totalmente falso | <strong>2</strong> = La mayoría de las veces falso | <strong>3</strong> = Más falso que verdadero<br>
+            <strong>4</strong> = Más verdadero que falso | <strong>5</strong> = La mayoría de las veces verdadero | <strong>6</strong> = Totalmente verdadero
+        </div>
+
+        <form id="ysq-form">
+            <!-- Datos del Paciente -->
+            <div class="paciente-info">
+                <div class="form-group">
+                    <label for="nombre">Nombre Completo</label>
+                    <input type="text" id="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="edad">Edad</label>
+                    <input type="number" id="edad" min="1" max="120" required>
+                </div>
+                <div class="form-group">
+                    <label for="sexo">Sexo</label>
+                    <select id="sexo" required>
+                        <option value="">Seleccione...</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Femenino">Femenino</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ocupacion">Ocupación</label>
+                    <input type="text" id="ocupacion" required>
+                </div>
+            </div>
+
+            <!-- Bloque de Preguntas (1 a 45) -->
+            <div id="preguntas-container">
+                
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">1. Me ha faltado alguien que me cuide, comparta conmigo o se preocupe profundamente por todo lo que a mí me pasa</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p1" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p1" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p1" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p1" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p1" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p1" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">2. Me aferro a la gente que siento cercana porque me da miedo que me dejen</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p2" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p2" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p2" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p2" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p2" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p2" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">3. Siento que la gente se aprovechará de mí</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p3" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p3" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p3" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p3" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p3" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p3" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">4. No encajo</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p4" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p4" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p4" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p4" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p4" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p4" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">5. Nadie que yo desee me podrá amar cuando vea mis defectos</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p5" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p5" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p5" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p5" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p5" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p5" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">6. Casi nada de lo que hago en el trabajo (o escuela) me sale bien como a los demás les sale</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p6" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p6" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p6" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p6" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p6" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p6" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">7. Me siento incapaz de salir adelante por mi cuenta en la vida diaria</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p7" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p7" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p7" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p7" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p7" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p7" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">8. Me cuesta trabajo escapar de la sensación de que algo malo está por suceder</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p8" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p8" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p8" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p8" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p8" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p8" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">9. A menudo siento que carezco de una identidad separada de mis padres o mi pareja</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p9" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p9" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p9" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p9" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p9" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p9" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">10. Pienso que si hago lo que quiero, sólo me estoy buscando problemas</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p10" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p10" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p10" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p10" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p10" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p10" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">11. Generalmente soy el que termina cuidando a las personas cercanas a mí</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p11" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p11" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p11" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p11" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p11" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p11" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">12. Soy demasiado cuidadoso para mostrar sentimientos positivos a otros (por ejemplo, afecto, mostrar que me importan)</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p12" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p12" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p12" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p12" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p12" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p12" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">13. Debo ser el mejor en la mayor parte de lo que hago; es inaceptable ser el segundo mejor</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p13" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p13" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p13" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p13" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p13" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p13" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">14. Se me dificulta aceptar un "no" por respuesta cuando quiero algo de otra persona</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p14" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p14" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p14" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p14" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p14" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p14" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">15. Me es imposible disciplinarme para completar las tareas rutinarias o aburridas</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p15" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p15" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p15" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p15" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p15" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p15" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">16. Tener dinero y conocer gente importante me hacen sentir que valgo la pena</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p16" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p16" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p16" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p16" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p16" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p16" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">17. Incluso cuando las cosas parecen ir bien, siento que es sólo temporal</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p17" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p17" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p17" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p17" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p17" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p17" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">18. Si cometo un error, merezco ser castigado</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p18" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p18" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p18" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p18" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p18" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p18" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">19. La gente me ha negado su cariño, apoyo y afecto</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p19" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p19" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p19" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p19" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p19" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p19" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">20. Necesito tanto a otras personas que me preocupo que los perderé</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p20" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p20" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p20" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p20" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p20" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p20" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">21. Siento que si bajo la guardia en presencia de otras personas me harán daño intencionalmente</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p21" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p21" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p21" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p21" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p21" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p21" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">22. Soy fundamentalmente diferente a los demás</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p22" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p22" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p22" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p22" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p22" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p22" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">23. Nadie que yo desee quisiera estar cerca de mí si conociera mi verdadero yo</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p23" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p23" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p23" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p23" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p23" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p23" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">24. Cuando se trata de logros, soy incompetente</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p24" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p24" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p24" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p24" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p24" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p24" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">25. Me veo a mí mismo como una persona dependiente con respecto al funcionamiento diario</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p25" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p25" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p25" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p25" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p25" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p25" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">26. Siento que un desastre (natural, penal, financiero o médico) podría suceder en cualquier momento</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p26" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p26" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p26" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p26" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p26" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p26" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">27. Mi (s) padre (s) y yo tenemos que estar demasiado involucrados en la vida y los problemas del otro</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p27" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p27" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p27" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p27" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p27" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p27" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">28. Siento que mi única opción es ceder a los deseos de los demás de lo contrario me rechazarán de alguna manera</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p28" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p28" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p28" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p28" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p28" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p28" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">29. Soy una buena persona porque pienso en los demás más que en mí mismo</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p29" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p29" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p29" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p29" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p29" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p29" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">30. Me da pena expresar mis sentimientos a los demás</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p30" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p30" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p30" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p30" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p30" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p30" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">31. Trato de hacer lo mejor posible, es inaceptable conformarse con "lo suficientemente bueno"</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p31" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p31" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p31" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p31" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p31" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p31" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">32. Soy especial y es inaceptable tener que acatar muchas de las restricciones que se les ponen a otras personas</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p32" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p32" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p32" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p32" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p32" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p32" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">33. Si fracaso para llegar a una meta, me frustro fácilmente y renuncio</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p33" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p33" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p33" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p33" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p33" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p33" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">34. Los logros son más valiosos para mí si otras personas los notan</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p34" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p34" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p34" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p34" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p34" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p34" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">35. Si sucede algo bueno, me preocupa que suceda algo malo después</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p35" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p35" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p35" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p35" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p35" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p35" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">36. Si no hago mi mejor esfuerzo debo esperar perder</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p36" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p36" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p36" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p36" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p36" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p36" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">37. No he sentido que soy especial para alguien</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p37" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p37" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p37" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p37" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p37" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p37" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">38. Me preocupo que la gente cercana a mí me dejará o abandonará</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p38" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p38" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p38" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p38" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p38" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p38" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">39. Es sólo cuestión de tiempo antes de que alguien me traicione</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p39" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p39" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p39" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p39" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p39" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p39" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">40. Yo no pertenezco; soy un solitario</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p40" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p40" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p40" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p40" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p40" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p40" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">41. Soy indigno de amor, atención y respeto de los demás</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p41" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p41" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p41" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p41" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p41" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p41" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">42. La mayoría de las personas son más capaces que yo en las tareas de trabajo (o escuela) y logro</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p42" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p42" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p42" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p42" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p42" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p42" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">43. Carezco de sentido común</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p43" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p43" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p43" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p43" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p43" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p43" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">44. Me preocupa ser atacado físicamente por otros</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p44" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p44" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p44" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p44" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p44" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p44" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">45. Es muy difícil para mí(s) padre(s) y para mí no contarnos detalles íntimos del otro, sin sentirnos traicionados o culpables</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p45" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p45" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p45" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p45" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p45" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p45" value="6">6</label>
+                    </div>
+                </div><div class="item-pregunta">
+                    <p class="pregunta-texto">46. En las relaciones, dejo que la otra persona tome la sartén por el mango</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p46" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p46" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p46" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p46" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p46" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p46" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">47. Estoy tan ocupado haciendo cosas por la gente que me importa, que tengo poco tiempo para mí</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p47" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p47" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p47" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p47" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p47" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p47" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">48. Me resulta difícil ser cálido y espontáneo</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p48" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p48" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p48" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p48" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p48" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p48" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">49. Debo cumplir con todas mis responsabilidades</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p49" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p49" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p49" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p49" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p49" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p49" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">50. Odio estar limitado a que me impidan hacer lo que quiero</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p50" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p50" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p50" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p50" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p50" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p50" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">51. Se me hace muy difícil renunciar a la gratificación inmediata para lograr un objetivo a largo plazo</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p51" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p51" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p51" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p51" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p51" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p51" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">52. A menos que consiga una gran cantidad de atención de los demás, me siento menos importante</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p52" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p52" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p52" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p52" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p52" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p52" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">53. No se puede ser demasiado cuidadoso, casi siempre algo va a salir mal</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p53" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p53" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p53" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p53" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p53" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p53" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">54. Si no hago bien mi trabajo debería sufrir las consecuencias</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p54" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p54" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p54" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p54" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p54" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p54" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">55. Me ha hecho falta alguien que realmente me escuche, entienda, o esté en sintonía con mis verdaderas necesidades y sentimientos</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p55" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p55" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p55" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p55" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p55" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p55" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">56. Cuando siento que alguien que quiero se aleja de mí, me siento desesperado</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p56" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p56" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p56" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p56" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p56" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p56" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">57. Sospecho de los motivos e intenciones de los demás</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p57" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p57" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p57" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p57" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p57" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p57" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">58. Me siento alejado de otras personas</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p58" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p58" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p58" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p58" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p58" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p58" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">59. Siento que no soy digno de ser amado</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p59" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p59" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p59" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p59" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p59" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p59" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">60. No soy tan talentoso como la mayoría de la gente lo es en su trabajo (o en la escuela)</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p60" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p60" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p60" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p60" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p60" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p60" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">61. Si confío en mi propio juicio en situaciones cotidianas, voy a tomar la decisión equivocada</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p61" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p61" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p61" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p61" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p61" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p61" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">62. Me preocupa perder todo mi dinero y quedarme en quiebra</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p62" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p62" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p62" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p62" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p62" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p62" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">63. A menudo me siento como si mis padre(s) estuvieran viviendo a través de mí; carezco de una vida propia</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p63" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p63" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p63" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p63" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p63" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p63" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">64. Siempre he dejado que otros tomen decisiones por mí, así que realmente desconozco lo que quiero para mí</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p64" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p64" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p64" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p64" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p64" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p64" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">65. Siempre he sido el que escucha los problemas de los demás</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p65" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p65" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p65" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p65" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p65" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p65" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">66. Me controlo tanto que la gente piensa que no tengo emociones</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p66" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p66" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p66" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p66" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p66" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p66" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">67. Siento que hay una presión constante en mí para lograr y hacer las cosas</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p67" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p67" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p67" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p67" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p67" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p67" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">68. Siento que no debería de tener que seguir las mismas reglas que otras personas hacen</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p68" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p68" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p68" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p68" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p68" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p68" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">69. Me es imposible obligarme a hacer cosas que me desagradan, incluso cuando sé que es por mi propio bien</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p69" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p69" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p69" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p69" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p69" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p69" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">70. Si hago comentarios o me presentan en una reunión, siento necesidad de ser reconocido y admirado</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p70" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p70" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p70" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p70" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p70" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p70" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">71. Sin importar lo duro que trabajo, me preocupa que podría quedarme sin dinero</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p71" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p71" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p71" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p71" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p71" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p71" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">72. No importa la razón de mis errores, si hago algo mal debo pagar el precio</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p72" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p72" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p72" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p72" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p72" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p72" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">73. He carecido de una persona fuerte para darme consejos o dirección cuando no estoy seguro de qué hacer</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p73" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p73" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p73" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p73" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p73" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p73" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">74. A veces me preocupo tanto que la gente me deje que los alejo</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p74" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p74" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p74" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p74" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p74" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p74" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">75. Normalmente estoy en busca de segundas intenciones de la gente</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p75" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p75" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p75" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p75" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p75" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p75" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">76. Siempre me siento ajeno a los grupos</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p76" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p76" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p76" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p76" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p76" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p76" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">77. Siento que soy inaceptable en aspectos básicos y no quiero que se den cuenta</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p77" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p77" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p77" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p77" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p77" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p77" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">78. No soy tan inteligente como la mayoría de la gente cuando se trata del trabajo (o escuela)</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p78" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p78" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p78" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p78" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p78" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p78" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">79. Me siento inseguro de mi capacidad para resolver problemas cotidianos que se presenten</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p79" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p79" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p79" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p79" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p79" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p79" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">80. Me preocupa estar desarrollando una enfermedad grave, a pesar de que nada grave ha sido diagnosticado por un médico</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p80" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p80" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p80" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p80" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p80" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p80" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">81. A menudo siento que carezco de una identidad separada de mis padres o mi pareja</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p81" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p81" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p81" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p81" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p81" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p81" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">82. Me cuesta trabajo exigir que se respeten mis derechos y que se tomen en cuenta mis sentimientos</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p82" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p82" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p82" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p82" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p82" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p82" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">83. Otras personas ven que hago demasiado por otros y no suficiente por mí</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p83" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p83" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p83" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p83" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p83" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p83" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">84. La gente me ve como emocionalmente tens@</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p84" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p84" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p84" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p84" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p84" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p84" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">85. No puedo dejar de presionarme o hacer excusas por mis errores</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p85" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p85" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p85" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p85" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p85" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p85" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">86. Siento que lo que tengo que ofrecer es de mayor valor que las contribuciones de los demás</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p86" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p86" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p86" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p86" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p86" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p86" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">87. Rara vez he sido capaz de mantener mis propósitos</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p87" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p87" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p87" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p87" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p87" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p87" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">88. Tener muchos elogios y felicitaciones me hace sentir como una persona valiosa</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p88" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p88" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p88" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p88" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p88" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p88" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">89. Me preocupa que una decisión equivocada puede concluir en un desastre</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p89" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p89" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p89" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p89" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p89" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p89" value="6">6</label>
+                    </div>
+                </div>
+
+                <div class="item-pregunta">
+                    <p class="pregunta-texto">90. Soy una mala persona que merece ser castigada</p>
+                    <div class="opciones">
+                        <label class="opcion-label"><input type="radio" name="p90" value="1" required>1</label>
+                        <label class="opcion-label"><input type="radio" name="p90" value="2">2</label>
+                        <label class="opcion-label"><input type="radio" name="p90" value="3">3</label>
+                        <label class="opcion-label"><input type="radio" name="p90" value="4">4</label>
+                        <label class="opcion-label"><input type="radio" name="p90" value="5">5</label>
+                        <label class="opcion-label"><input type="radio" name="p90" value="6">6</label>
+                    </div>
+                </div>
+
+            </div>
+
+            <button type="submit" class="btn-enviar" id="btn-submit">Enviar Respuestas</button>
+        </form>
+    </div>
+
+    <!-- Mensaje de Éxito Limpio para el Paciente -->
+    <div id="mensaje-exito">
+        <h2>Gracias por responder.</h2>
+        <p>Sus respuestas fueron enviadas correctamente.</p>
+    </div>
+</div>
+
+<script>
+    // Inicialización de EmailJS con tus credenciales
+    emailjs.init("81g6Ac_4uRaHpLeZx");
+
+    // Matriz de configuración para los 18 EMT (Cuestionario de Esquemas de Young YSQ-III)
+    const emtConfig = {
+        "Privación emocional": {
+            items: [1, 19, 37, 55, 73],
+            calcularInterpretacion: (s) => (s <= 6 ? "Bajo" : s <= 17 ? "Normal" : "Alto")
+        },
+        "Abandono": {
+            items: [2, 20, 38, 56, 74],
+            calcularInterpretacion: (s) => (s <= 8 ? "Bajo" : s <= 20 ? "Normal" : "Alto")
+        },
+        "Desconfianza y abuso": {
+            items: [3, 21, 39, 57, 75],
+            calcularInterpretacion: (s) => (s <= 7 ? "Bajo" : s <= 18 ? "Normal" : "Alto")
+        },
+        "Aislamiento social": {
+            items: [4, 22, 40, 58, 76],
+            calcularInterpretacion: (s) => (s <= 7 ? "Bajo" : s <= 18 ? "Normal" : "Alto")
+        },
+        "Defectuosidad": {
+            items: [5, 23, 41, 59, 77],
+            calcularInterpretacion: (s) => (s <= 5 ? "Bajo" : s <= 16 ? "Normal" : "Alto")
+        },
+        "Fracaso": {
+            items: [6, 24, 42, 60, 78],
+            calcularInterpretacion: (s) => (s <= 6 ? "Bajo" : s <= 17 ? "Normal" : "Alto")
+        },
+        "Dependencia/incompetencia": {
+            items: [7, 25, 43, 61, 79],
+            calcularInterpretacion: (s) => (s <= 6 ? "Bajo" : s <= 15 ? "Normal" : "Alto")
+        },
+        "Vulnerabilidad": {
+            items: [8, 26, 44, 62, 80],
+            calcularInterpretacion: (s) => (s <= 8 ? "Bajo" : s <= 19 ? "Normal" : "Alto")
+        },
+        "Simbiosis": {
+            items: [9, 27, 45, 63, 81],
+            calcularInterpretacion: (s) => (s <= 7 ? "Bajo" : s <= 18 ? "Normal" : "Alto")
+        },
+        "Subyugación": {
+            items: [10, 28, 46, 64, 82],
+            calcularInterpretacion: (s) => (s <= 7 ? "Bajo" : s <= 17 ? "Normal" : "Alto")
+        },
+        "Sacrificio": {
+            items: [11, 29, 47, 65, 83],
+            calcularInterpretacion: (s) => (s <= 10 ? "Bajo" : s <= 22 ? "Normal" : "Alto")
+        },
+        "Inhibición emocional": {
+            items: [12, 30, 48, 66, 84],
+            calcularInterpretacion: (s) => (s <= 7 ? "Bajo" : s <= 19 ? "Normal" : "Alto")
+        },
+        "Estándares inalcanzables": {
+            items: [13, 31, 49, 67, 85],
+            calcularInterpretacion: (s) => (s <= 12 ? "Bajo" : s <= 22 ? "Normal" : "Alto")
+        },
+        "Grandiosidad": {
+            items: [14, 32, 50, 68, 86],
+            calcularInterpretacion: (s) => (s <= 9 ? "Bajo" : s <= 19 ? "Normal" : "Alto")
+        },
+        "Disciplina insuficiente": {
+            items: [15, 33, 51, 69, 87],
+            calcularInterpretacion: (s) => (s <= 8 ? "Bajo" : s <= 19 ? "Normal" : "Alto")
+        },
+        "Búsqueda de reconocimiento": {
+            items: [16, 34, 52, 70, 88],
+            calcularInterpretacion: (s) => (s <= 10 ? "Bajo" : s <= 18 ? "Normal" : "Alto")
+        },
+        "Negatividad": {
+            items: [17, 35, 53, 71, 89],
+            calcularInterpretacion: (s) => (s <= 9 ? "Bajo" : s <= 17 ? "Normal" : "Alto")
+        },
+        "Punitivo": {
+            items: [18, 36, 54, 72, 90],
+            calcularInterpretacion: (s) => (s <= 9 ? "Bajo" : s <= 17 ? "Normal" : "Alto")
+        }
+    };
+
+    document.getElementById('ysq-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const btnSubmit = document.getElementById('btn-submit');
+        btnSubmit.disabled = true;
+        btnSubmit.innerText = "Enviando cuestionario...";
+
+        const nombre = document.getElementById('nombre').value;
+        const edad = document.getElementById('edad').value;
+        const sexo = document.getElementById('sexo').value;
+        const ocupacion = document.getElementById('ocupacion').value;
+        const fechaHora = new Date().toLocaleString('es-MX', { timeZoneName: 'short' });
+
+        // Procesar las puntuaciones numéricas
+        const respuestas = {};
+        for (let i = 1; i <= 90; i++) {
+            const elegido = document.querySelector(`input[name="p${i}"]:checked`);
+            respuestas[i] = parseInt(elegido.value);
+        }
+
+        // Estructurar el reporte clínico e indicadores críticos (puntuaciones de 5 o 6)
+        let tablaReporteEmail = "";
+        const nombresEsquemas = Object.keys(emtConfig);
+        const puntajesGrafica = [];
+        const etiquetasGrafica = ['Priv', 'Aban', 'Abus', 'Ais', 'Def', 'Frac', 'Dep', 'Vul', 'Simb', 'Suby', 'Sacr', 'Inh', 'Est', 'Gran', 'Disc', 'Reco', 'Neg', 'Pun'];
+
+        nombresEsquemas.forEach(esquema => {
+            const config = emtConfig[esquema];
+            let sumaEsquema = 0;
+            let conteoCriticos = 0; // Ítems evaluados con 5 o 6
+
+            config.items.forEach(numItem => {
+                const puntuacion = respuestas[numItem];
+                sumaEsquema += puntuacion;
+                if (puntuacion === 5 || puntuacion === 6) {
+                    conteoCriticos++;
+                }
+            });
+
+            const interpretacion = config.calcularInterpretacion(sumaEsquema);
+            puntajesGrafica.push(sumaEsquema);
+
+            tablaReporteEmail += `${esquema}:\n - Puntaje Total: ${sumaEsquema}\n - Ítems Críticos (5 o 6): ${conteoCriticos}/5\n - Clasificación: ${interpretacion}\n\n`;
+        });
+
+        // Configuración dinámica de QuickChart para graficar los 18 esquemas en paralelo
+        const chartConfig = {
+            type: 'bar',
+            data: {
+                labels: etiquetasGrafica,
+                datasets: [{
+                    label: 'Puntuación por Esquema',
+                    data: puntajesGrafica,
+                    backgroundColor: puntajesGrafica.map(p => p >= 18 ? '#ef4444' : p >= 10 ? '#f59e0b' : '#3b82f6'),
+                    borderColor: '#1e293b',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                title: { display: true, text: 'Perfil de Esquemas Maladaptativos (YSQ-III)' },
+                scales: { yAxes: [{ ticks: { min: 5, max: 30 } }] }
+            }
+        };
+        const urlGrafica = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}`;
+
+        // Parámetros del objeto para asociar a tu plantilla template_sa4pu8o
+        const templateParams = {
+            nombre: nombre,
+            edad: edad,
+            sexo: sexo,
+            ocupacion: ocupacion,
+            fecha_hora: fechaHora,
+            resultados: tablaReporteEmail,
+            url_grafica: urlGrafica
+        };
+
+        // Despachar el reporte clínico a tu buzón mediante EmailJS
+        emailjs.send('service_tf79c79', 'template_sa4pu8o', templateParams)
+            .then(function() {
+                // Ocultar la interfaz del cuestionario
+                document.getElementById('form-wrapper').style.display = 'none';
+                // Mostrar exclusivamente la pantalla limpia de confirmación al paciente
+                document.getElementById('mensaje-exito').style.display = 'block';
+                window.scrollTo(0, 0);
+            }, function(error) {
+                alert("Ocurrió un inconveniente al procesar el envío. Por favor, reintente.");
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = "Enviar Respuestas";
+                console.error("EmailJS Error:", error);
+            });
+    });
+</script>
+</body>
+</html>
